@@ -1,0 +1,29 @@
+{
+  "name": "Daily Lures",
+  "short_name": "DailyLures",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1f1a",
+  "theme_color": "#0f2f24",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/hero-1280x720.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "label": "Daily Lures cover"
+    }
+  ]
+}

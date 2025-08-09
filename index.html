@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f2f24" />
+  <title>Daily Lures</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preload" href="assets/hero-1280x720.jpg" as="image" />
+  <style>
+    :root{
+      --bg:#0b1f1a; --card:rgba(255,255,255,0.08); --card-border:rgba(255,255,255,0.12);
+      --accent:#23c483; --accent-2:#60a5fa; --accent-3:#f59e0b; --text:#e8f1ed; --muted:#b7c5bf;
+      --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px; --pad:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:radial-gradient(80% 120% at 0% 0%, #0f2f24 0%, #0b1f1a 40%, #081610 100%);
+      min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:20px;}
+    .app{ width:100%; max-width:700px; }
+    .hero{ position:relative; overflow:hidden; border-radius:var(--radius); border:1px solid var(--card-border);
+      box-shadow:var(--shadow); background:#0f2f24 url('assets/hero-1280x720.jpg') center/cover no-repeat;
+      min-height:220px; display:flex; align-items:flex-end; }
+    .hero .overlay{ width:100%; padding:18px; background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.45) 55%, rgba(0,0,0,.55) 100%);
+      border-bottom-left-radius:var(--radius); border-bottom-right-radius:var(--radius) }
+    .hero h1{ margin:0; font-size:2rem } .hero p{ margin:6px 0 0; color:var(--muted) }
+    .card{ margin-top:14px; background: var(--card); border:1px solid var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden }
+    .card .body{ padding: var(--pad) }
+    .controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between }
+    .btn, input{
+      appearance:none; font:inherit; color:var(--text);
+      background: rgba(255,255,255,.06); border:1px solid var(--card-border);
+      padding:10px 12px; border-radius:12px; cursor:pointer; transition: transform .05s ease, background .2s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.09) } .btn:active{ transform: scale(.98) }
+    #radius{ width:240px } #radiusOut{ font-weight:700; color:var(--accent-3) }
+    .muted{ color: var(--muted) } .status{ min-height:1.1rem }
+    .row{ display:flex; align-items:center; gap:10px } .grid{ display:grid; gap:12px; grid-template-columns:1fr 1fr }
+    .tile{ background: rgba(0,0,0,.18); border:1px solid var(--card-border); border-radius: 14px; padding:12px }
+    .chip{ display:inline-flex; gap:8px; padding:8px 10px; border-radius:999px; background: rgba(35,196,131,.12); border:1px solid rgba(35,196,131,.35); }
+    .skeleton{ position: relative; overflow:hidden; background: rgba(255,255,255,.06) }
+    .skeleton::after{ content:""; position:absolute; inset:0; transform: translateX(-100%);
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.25) 50%, rgba(255,255,255,0) 100%); animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
+    .debug{ margin-top:8px; font-size:.9rem; color:#cbd5e1 }
+  </style>
+</head>
+<body>
+  <main class="app" aria-live="polite">
+    <section class="hero">
+      <div class="overlay">
+        <h1>Daily Lures</h1>
+        <p class="muted">Modern UI + strict radius filtering</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="body">
+        <div class="controls">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button id="locbtn" class="btn">Use My Location</button>
+            <label for="radius">Radius: <output id="radiusOut">50</output> mi</label>
+            <input type="range" id="radius" min="10" max="100" step="10" value="50" />
+            <button id="reset" class="btn">Reset</button>
+          </div>
+          <button id="settings" class="btn" aria-label="Settings">Settings</button>
+        </div>
+        <div id="locstatus" class="status muted" aria-live="polite"></div>
+        <div id="debug" class="debug"></div>
+        <div id="date" class="muted"></div>
+      </div>
+    </section>
+
+    <section class="card" id="results">
+      <div class="body">
+        <div class="row" style="justify-content:space-between">
+          <div class="title">Best Spot</div>
+          <span class="chip"><span id="lure">&mdash;</span></span>
+        </div>
+
+        <div class="tile row skeleton" id="spotTile" style="margin-top:10px"><div class="value" id="spot">Tap Use My Location to start&hellip;</div></div>
+        <div class="grid" style="margin-top:10px">
+          <div class="tile row skeleton" id="tempTile"><div class="value" id="temps">&mdash;</div></div>
+          <div class="tile row skeleton" id="condTile"><div class="value" id="cond">&mdash;</div></div>
+        </div>
+        <div class="lure-detail" id="lureDetail"></div>
+
+        <div class="footer" style="margin-top:12px">
+          <button id="refresh" class="btn" style="flex:1">Refresh Now</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dlg">
+    <div class="dlg-h" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--card-border)">
+      <strong>Settings</strong>
+      <button id="dlgClose" class="btn">Close</button>
+    </div>
+    <div class="dlg-b" style="padding:16px">
+      <label for="apikey">OpenWeather API Key</label>
+      <input id="apikey" class="input" type="password" placeholder="Enter key" autocomplete="off" />
+      <small class="muted">Stored locally on this device only.</small>
+    </div>
+    <div class="dlg-f" style="display:flex;gap:10px;justify-content:flex-end;padding:14px 16px;border-top:1px solid var(--card-border)">
+      <button id="dlgSave" class="btn">Save</button>
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
+    }
+  </script>
+</body>
+</html>
